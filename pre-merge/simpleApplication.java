@@ -8,7 +8,7 @@
 	5. Complete Student's Performance Analysis functionality:
 		a. Include scores of exams with FINISHED_GRADING == 1
 		b. Include "predicted subject grade", which is average of all exams so far
-		c. Include comment on what subject to focus improvement on
+		c. Include comment on what subject to focus improvement 
 */
 
 
@@ -40,8 +40,8 @@ public class simpleApplication
 		try {
 			String username, password;
 			String Useremail;
-			username = "\"19051822d\"";            // Your Oracle Account ID
-			password = "dacacwpq";        // Password of Oracle Account
+			username = "\"18087058d\"";            // Your Oracle Account ID
+			password = "dogllnff";        // Password of Oracle Account
 
 			// Connection
 			DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
@@ -148,7 +148,7 @@ public class simpleApplication
 									// CREATE NEW EXAM MODE
 
 									case "1":
-										// Set SubjectID, Exam Date, Exam Start-Time, Exam Time Duration, ExamID duration 
+										// Set SubjectID, Exam Date, Exam Start-Time, Exam Time Duration, ExamID
 
 										String[] examSetting = new String[5];
 										System.out.println("");
@@ -157,6 +157,7 @@ public class simpleApplication
 										while (op.next()) {
 											System.out.println(op.getString("SUBJECT_ID") + ". " + op.getString("SUBJECT_NAME"));
 										}
+										op.close();
 										System.out.print("Enter the Subject ID: \n");
 										scan = new Scanner(System.in);
 										examSetting[0] = scan.nextLine();
@@ -173,7 +174,7 @@ public class simpleApplication
 										scan = new Scanner(System.in);
 										examSetting[3] = scan.nextLine();
 
-										System.out.print("Please enter the ExamID duration in XXXXXXXX_EXAMXXX format: \n");
+										System.out.print("Please enter the ExamID XXXXXXXX_EXAMXXX format: \n");
 										scan = new Scanner(System.in);
 										examSetting[4] = scan.nextLine();
 										int maxQuestionID;
@@ -182,7 +183,7 @@ public class simpleApplication
 												+ examSetting[2].toString() + "','" + examSetting[3].toString()+"', '100')");
 
 
-										// TODO 2: INSERT INTO STUDENT_EXAM_SCORE HERE
+
 
 										// SET QUESTIONS MODE
 										boolean setQuestion = true;
@@ -293,6 +294,31 @@ public class simpleApplication
 													break;
 											}
 										}
+										// TODO 2: 
+										// Get list of STUDENTIDs of students who should take this exam FROM STUDENT and CLASS tables using ExamID from above.
+										ResultSet students_taking_this_exam = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
+										// Post new tuples to STUDENT_EXAM_SCORES
+										int studentlistsize = 0;
+										while (students_taking_this_exam.next()){
+											studentlistsize++;
+										}
+										String studentlist[] = new String[studentlistsize+1];
+										int i = 0;
+										students_taking_this_exam.close();
+										ResultSet students_taking_this_exam2 = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
+										// Post new tuples to STUDENT_EXAM_SCORES
+										while (students_taking_this_exam2.next()){
+											studentlist[i] = students_taking_this_exam2.getString(1);
+											i++;
+										}
+										for (int x = 0; x < studentlistsize; x++){
+											stmt.executeUpdate("INSERT INTO STUDENT_EXAM_SCORE VALUES('" + studentlist[x] + "','" + examSetting[4] + "',0,0)");
+										}
+
+										students_taking_this_exam2.close();
+
+										System.out.println("\n \n \n \n");	
+										break;
 
 									case "2":
 
@@ -320,7 +346,7 @@ public class simpleApplication
 							System.out.print(" "+Exam.getString(5));
 							System.out.print(" "+Exam.getString(6));
 						}
-
+						Exam.close();
 						System.out.println("Enter a digit for request:\n" +
 								"1. Participate to available exam\n " +
 								"2. View Student Performance Analysis \n");
@@ -371,6 +397,7 @@ public class simpleApplication
 												}
 											}
 										}
+										questions.close();
 										stmt.executeQuery("UPDATE STUDENT_REPORT SET TEMP_SCORE = " + tempscore +
 												" WHERE STUDENT_ID= '" + currentUser[0]+"'");
 										break;
@@ -387,6 +414,7 @@ public class simpleApplication
 								while(Reports.next()){
 									System.out.println(Reports.getString(1) + " " + Reports.getString(2) + Reports.getString(3));
 								}
+								Reports.close();
 							break;
 							
 							default:
