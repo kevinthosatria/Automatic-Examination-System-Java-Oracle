@@ -120,13 +120,15 @@ public class simpleApplication1
             }
 
 
-            //start CLI//
+            //START CLI//
             if (login) {
                 System.out.println("Welcome " + currentUserType + " " + currentUser[1] + "!");
                 while (!terminate) {
                     if (currentUserType.equals("TEACHER")) {
                         System.out.println("Enter a digit for request:\n" +
-                                "1. Test Designer\n" + "2. Paper Checking");
+                                "1. Test Designer\n" + 
+                                "2. Paper Checking"
+                        );
 
                         Scanner scan = new Scanner(System.in);
                         String input = scan.nextLine();
@@ -148,42 +150,75 @@ public class simpleApplication1
                                     // CREATE NEW EXAM MODE
 
                                     case "1":
-                                        // Set SubjectID, Exam Date, Exam Start-Time, Exam Time Duration, ExamID duration
+                                        // TODO A: Generate new tuple for EXAM table
 
-                                        String[] examSetting = new String[5];
-                                        System.out.println("");
-                                        System.out.print("List of Subject ID: \n");
-                                        ResultSet op = stmt.executeQuery("SELECT SUBJECT_ID, SUBJECT_NAME FROM SUBJECT WHERE SUBJECT_ID = (SELECT SUBJECT_ID FROM CLASS WHERE STAFF_ID='"+currentUser[0]+"')");
+                                        String[] examSetting = new String[5];   // [EXAM_ID, SUBJECT_ID, DAY, START_TIME, DURATION]
+
+                                        System.out.println("\n Below are subjects taught by this teacher: \n");
+                                        System.out.println("\n SUBJECT_ID | SUBJECT_NAME \n");            
+                                        
+                                        // get list of subjects taught by this teacher
+                                        ResultSet op = stmt.executeQuery("SELECT SUBJECT_ID, SUBJECT_NAME FROM SUBJECT WHERE SUBJECT_ID = (SELECT SUBJECT_ID FROM SUBJECT_TEACHER WHERE STAFF_ID='"+currentUser[0]+"')");
+                                        
+                                        // print list of subjects taught by this teacher
                                         while (op.next()) {
-                                            System.out.println(op.getString("SUBJECT_ID") + ". " + op.getString("SUBJECT_NAME"));
+                                            System.out.println(op.getString("SUBJECT_ID") + " | " + op.getString("SUBJECT_NAME"));
                                         }
-                                        System.out.print("Enter the Subject ID: \n");
+
+                                        System.out.print("\n CREATING EXAM: \n Enter the Subject ID to create Exam for: \n");
+                                        scan = new Scanner(System.in);
+                                        examSetting[1] = scan.nextLine();
+
+                                        System.out.print("Please enter the ExamID in XXXXXXXX_EXAMXXX format: \n");
                                         scan = new Scanner(System.in);
                                         examSetting[0] = scan.nextLine();
 
                                         System.out.print("Please enter the Exam Date in yyyy-mm-dd format: \n");
                                         scan = new Scanner(System.in);
-                                        examSetting[1] = scan.nextLine();
+                                        examSetting[2] = scan.nextLine();
 
                                         System.out.print("Please enter the Exam start-time in xx:xx format: \n");
                                         scan = new Scanner(System.in);
-                                        examSetting[2] = scan.nextLine();
+                                        examSetting[3] = scan.nextLine();
 
                                         System.out.print("Please enter the Exam time duration in xx:xx format: \n");
                                         scan = new Scanner(System.in);
-                                        examSetting[3] = scan.nextLine();
-
-                                        System.out.print("Please enter the ExamID duration in XXXXXXXX_EXAMXXX format: \n");
-                                        scan = new Scanner(System.in);
                                         examSetting[4] = scan.nextLine();
-                                        int maxQuestionID;
 
-                                        stmt.executeUpdate("INSERT INTO EXAM_PAPER VALUES('" + examSetting[4].toString() + "','" + examSetting[0].toString() + "','" + examSetting[1].toString() + "','"
-                                                + examSetting[2].toString() + "','" + examSetting[3].toString()+"', '100')");
+                                        // TODO B: Insert new tuple to EXAM table
+                                        stmt.executeUpdate("INSERT INTO EXAM VALUES('" + examSetting[0].toString() + "','" + examSetting[1].toString() + "','" + examSetting[2].toString() + "','"
+                                                + examSetting[3].toString() + "','" + examSetting[4].toString()+"', 100)");
+                                        
+                                        // TODO C: Generate & insert EXAM_PAPER tuples for each student who is taking this subject
 
+                                        // get list of students taking this subject (students can only belong to one class, one class can have many subjects, assume each subject can only belong to one class)
+                                        ResultSet students_taking_this_subject = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT WHERE CLASS_ID = (SELECT CLASS_ID FROM SUBJECT WHERE SUBJECT_ID = '" + examSetting[1].toString() + "')");
 
+                                        // convert ResultSet to array of STUDENT_ID called array_of_students_taking_this_subject
+                                        int array_of_students_taking_this_subject_size = 0;
+                                        while (students_taking_this_subject.next()){
+                                            array_of_students_taking_this_subject_size++;
+                                        }
+                                        String array_of_students_taking_this_subject[] = new String[array_of_students_taking_this_subject_size+1];
+                                        int j = 0;
+                                        students_taking_this_subject.close();
+                                        ResultSet students_taking_this_subject2 = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT WHERE CLASS_ID = (SELECT CLASS_ID FROM SUBJECT WHERE SUBJECT_ID = '" + examSetting[1].toString() + "')");
+                                
 
+                                        while (students_taking_this_subject2.next()){
+                                            array_of_students_taking_this_subject[j] = students_taking_this_subject2.getString(1);
+                                            j++;
+                                        }
+
+                                        // Insert new EXAM_PAPER tuples for each student to EXAM_PAPER table
+                                        // EXAM_PAPER(STUDENT_ID, EXAM_ID, SUBJECT_ID, STUDENT_EXAM_SCORE, TEACHER_FINISHED_GRADING)
+                                        for (int x=0; x<array_of_students_taking_this_subject_size; x++){
+                                            stmt.executeUpdate("INSERT INTO EXAM_PAPER VALUES('" + array_of_students_taking_this_subject[x] + "', '" + examSetting[0] + "', '" + examSetting[1] + "', 0, 0)");
+                                        }  
+
+                                        // TODO D: Update the insertions for new QUESTION table 
                                         // SET QUESTIONS MODE
+                                        int maxQuestionID;
                                         boolean setQuestion = true;
                                         while (setQuestion) {
                                             System.out.print("Add new Question? 1=Yes 2=No. \n");
@@ -290,38 +325,36 @@ public class simpleApplication1
                                                 case "2":
                                                     setQuestion = false;
                                                     break;
-                                            }
+                                            }   
                                         }
-
-                                        // TODO 2
-                                        // Get list of STUDENTIDs of students who should take this exam FROM STUDENT and CLASS tables using ExamID from above.
-                                        ResultSet students_taking_this_exam = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
-                                        // Post new tuples to STUDENT_EXAM_SCORES
-                                        int studentlistsize = 0;
-                                        while (students_taking_this_exam.next()){
-                                            studentlistsize++;
-                                        }
-                                        String studentlist[] = new String[studentlistsize+1];
-                                        int i = 0;
-                                        students_taking_this_exam.close();
-                                        ResultSet students_taking_this_exam2 = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
-                                        // Post new tuples to STUDENT_EXAM_SCORES
-                                        while (students_taking_this_exam2.next()){
-                                            studentlist[i] = students_taking_this_exam2.getString(1);
-                                            i++;
-                                        }
-                                        for (int x = 0; x < studentlistsize; x++){
-                                            stmt.executeUpdate("INSERT INTO STUDENT_EXAM_SCORE VALUES('" + studentlist[x] + "','" + examSetting[4] + "',0,0)");
-                                        }
-
-                                        students_taking_this_exam2.close();
-
-                                        System.out.println("\n \n \n \n");
-                                        break;
 
 
                                     case "2":
+                                    // // TODO 2 / TODO E: Update Paper Checking functionality to fit new database design
+                                    // // Get list of STUDENTIDs of students who should take this exam FROM STUDENT and CLASS tables using ExamID from above.
+                                    // ResultSet students_taking_this_exam = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
+                                    // // Post new tuples to STUDENT_EXAM_SCORES
+                                    // int studentlistsize = 0;
+                                    // while (students_taking_this_exam.next()){
+                                    //     studentlistsize++;
+                                    // }
+                                    // String studentlist[] = new String[studentlistsize+1];
+                                    // int i = 0;
+                                    // students_taking_this_exam.close();
+                                    // ResultSet students_taking_this_exam2 = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
+                                    // // Post new tuples to STUDENT_EXAM_SCORES
+                                    // while (students_taking_this_exam2.next()){
+                                    //     studentlist[i] = students_taking_this_exam2.getString(1);
+                                    //     i++;
+                                    // }
+                                    // for (int x = 0; x < studentlistsize; x++){
+                                    //     stmt.executeUpdate("INSERT INTO STUDENT_EXAM_SCORE VALUES('" + studentlist[x] + "','" + examSetting[4] + "',0,0)");
+                                    // }
 
+                                    // students_taking_this_exam2.close();
+
+                                    // System.out.println("\n \n \n \n");
+                                    break;
 
                                     default:
                                         terminate = true;
