@@ -4,7 +4,7 @@
 	3. While Student is doing the exam, concurrently grade MCQ and FITB questions and update the STUDENT_EXAM_SCORE records -> EXAM_SCORE variable
 	4. Complete Teacher's Paper Checking functionality:
 		a. Update STUDENT_EXAM_SCORE records -> EXAM_SCORE variable
-		b. Set STUDENT_EXAM_SCORE records -> FINISHED_GRADING to 1 
+		b. Set STUDENT_EXAM_SCORE records -> FINISHED_GRADING to 1
 	5. Complete Student's Performance Analysis functionality:
 		a. Include scores of exams with FINISHED_GRADING == 1
 		b. Include "predicted subject grade", which is average of all exams so far
@@ -15,13 +15,13 @@
 import java.io.*;
 import java.sql.*;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+
 import oracle.jdbc.driver.*;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.time.LocalDateTime;
+import java.util.Date;
+
 import oracle.sql.*;
 
 import javax.annotation.processing.SupportedSourceVersion;
@@ -40,8 +40,8 @@ public class simpleApplication1
         try {
             String username, password;
             String Useremail;
-            username = "\"19051822d\"";            // Your Oracle Account ID
-            password = "dacacwpq";        // Password of Oracle Account
+            username = "\"18087058d\"";            // Your Oracle Account ID
+            password = "dogllnff";        // Password of Oracle Account
 
             // Connection
             DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
@@ -153,7 +153,7 @@ public class simpleApplication1
                                         String[] examSetting = new String[5];
                                         System.out.println("");
                                         System.out.print("List of Subject ID: \n");
-                                        ResultSet op = stmt.executeQuery("SELECT SUBJECT_ID, SUBJECT_NAME FROM SUBJECT");
+                                        ResultSet op = stmt.executeQuery("SELECT SUBJECT_ID, SUBJECT_NAME FROM SUBJECT WHERE SUBJECT_ID = (SELECT SUBJECT_ID FROM CLASS WHERE STAFF_ID='"+currentUser[0]+"')");
                                         while (op.next()) {
                                             System.out.println(op.getString("SUBJECT_ID") + ". " + op.getString("SUBJECT_NAME"));
                                         }
@@ -182,7 +182,7 @@ public class simpleApplication1
                                                 + examSetting[2].toString() + "','" + examSetting[3].toString()+"', '100')");
 
 
-                                        System.out.println("Remember that total score must be 100!");
+
                                         // SET QUESTIONS MODE
                                         boolean setQuestion = true;
                                         while (setQuestion) {
@@ -295,33 +295,32 @@ public class simpleApplication1
 
                                         // TODO 2
                                         // Get list of STUDENTIDs of students who should take this exam FROM STUDENT and CLASS tables using ExamID from above.
-										ResultSet students_taking_this_exam = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
-										// Post new tuples to STUDENT_EXAM_SCORES
-										int studentlistsize = 0;
-										while (students_taking_this_exam.next()){
-											studentlistsize++;
-										}
-										String studentlist[] = new String[studentlistsize+1];
-										int i = 0;
-										students_taking_this_exam.close();
-										ResultSet students_taking_this_exam2 = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
-										// Post new tuples to STUDENT_EXAM_SCORES
-										while (students_taking_this_exam2.next()){
-											studentlist[i] = students_taking_this_exam2.getString(1);
-											i++;
-										}
-										for (int x = 0; x < studentlistsize; x++){
-											stmt.executeUpdate("INSERT INTO STUDENT_EXAM_SCORE VALUES('" + studentlist[x] + "','" + examSetting[4] + "',0,0)");
-										}
+                                        ResultSet students_taking_this_exam = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
+                                        // Post new tuples to STUDENT_EXAM_SCORES
+                                        int studentlistsize = 0;
+                                        while (students_taking_this_exam.next()){
+                                            studentlistsize++;
+                                        }
+                                        String studentlist[] = new String[studentlistsize+1];
+                                        int i = 0;
+                                        students_taking_this_exam.close();
+                                        ResultSet students_taking_this_exam2 = stmt.executeQuery("SELECT STUDENT_ID FROM STUDENT, CLASS WHERE STUDENT.CLASS_ID = CLASS.CLASS_ID AND CLASS.SUBJECT_ID = '" + examSetting[0] + "'");
+                                        // Post new tuples to STUDENT_EXAM_SCORES
+                                        while (students_taking_this_exam2.next()){
+                                            studentlist[i] = students_taking_this_exam2.getString(1);
+                                            i++;
+                                        }
+                                        for (int x = 0; x < studentlistsize; x++){
+                                            stmt.executeUpdate("INSERT INTO STUDENT_EXAM_SCORE VALUES('" + studentlist[x] + "','" + examSetting[4] + "',0,0)");
+                                        }
 
-										students_taking_this_exam2.close();
+                                        students_taking_this_exam2.close();
 
-										System.out.println("\n \n \n \n");	
-										break;
+                                        System.out.println("\n \n \n \n");
+                                        break;
 
 
                                     case "2":
-
 
 
                                     default:
@@ -329,21 +328,6 @@ public class simpleApplication1
                                         break;
                                 }
                             case "2":
-                                // TODO 4: PAPER CHECKING MODE
-                                
-                                // list the papers that are not yet graded by teacher
-                                System.out.println("\n Paper Checking Mode selected. \n");
-                                ResultSet unmarkedpapers = stmt.executeQuery("SELECT STUDENT_ID, EXAM_ID FROM STUDENT_EXAM_SCORE WHERE STUDENT_EXAM_SCORE.TEACHER_FINISHED_GRADING = 0");
-                                while(unmarkedpapers.next()){
-                                    System.out.println(unmarkedpapers.getString(1) + " " + unmarkedpapers.getString(2));
-                                }
-                                
-                                System.out.println("\n \n");
-                                // choose the paper to mark
-
-                                // mark the paper
-
-                                // update student_exam_score table
                                 break;
                         }
                     } else {
@@ -351,16 +335,16 @@ public class simpleApplication1
 
                         List<String> answerList = new ArrayList<>();
                         System.out.println("Exams that are coming up: ");
-                        ResultSet Exam = stmt.executeQuery("SELECT * FROM EXAM_PAPER WHERE SUBJECT_ID=" +
-                                "(SELECT SUBJECT_ID FROM CLASS WHERE CLASS_ID=(SELECT CLASS_ID FROM STUDENT WHERE CLASS_ID='" +
+                        ResultSet Exam = stmt.executeQuery("SELECT * FROM EXAM WHERE SUBJECT_ID IN" +
+                                "(SELECT SUBJECT_ID FROM SUBJECT WHERE CLASS_ID=(SELECT CLASS_ID FROM STUDENT WHERE CLASS_ID='" +
                                 currentUser[2] + "'))");
                         while (Exam.next()) {
-                            System.out.println(Exam.getString(1));
-                            System.out.print(" "+Exam.getString(2));
-                            System.out.print(" "+Exam.getString(3));
-                            System.out.print(" "+Exam.getString(4));
-                            System.out.print(" "+Exam.getString(5));
-                            System.out.print(" "+Exam.getString(6));
+                            System.out.println("ExamID: "+Exam.getString(1));
+                            System.out.print("SubjectID: "+Exam.getString(2));
+                            System.out.print("\nDate: "+Exam.getString(3));
+                            System.out.print(" Start_time: "+Exam.getString(4));
+                            System.out.print(" Duration: "+Exam.getString(5));
+                            System.out.print("\nMax Score: "+Exam.getString(6));
                         }
 
                         System.out.println("Enter a digit for request:\n" +
@@ -375,105 +359,140 @@ public class simpleApplication1
                             case "1":
                                 // PARTICIPTE TO AVAILABLE EXAM
                                 int tempscore = 0;
-                                Exam = stmt.executeQuery("SELECT * FROM EXAM_PAPER WHERE SUBJECT_ID=" +
-                                        "(SELECT SUBJECT_ID FROM CLASS WHERE CLASS_ID=(SELECT CLASS_ID FROM STUDENT WHERE CLASS_ID='" +
-                                        currentUser[2] + "'))");
-                                Exam.next();
-                                String ExamDate = Exam.getString(3) + " " + Exam.getString(4);
-                                String ExamIDCur = Exam.getString(1);
-                                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-                                LocalDateTime currentTime = LocalDateTime.now();
-                                System.out.println(ExamIDCur);
-                                try {
-                                    Date date = formatter.parse(ExamDate);
-                                    Date now = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
-                                    boolean OK = true;
-                                    if (date.compareTo(now) < 0) {
-                                        OK = false;
-                                    }
-                                    ResultSet questions = stmt.executeQuery("SELECT * FROM QUESTION WHERE QUESTION_ID IN(SELECT QUESTION_ID FROM EXAMPAPER_QUESTIONS WHERE EXAM_ID='" + ExamIDCur+"')");
-                                    while (OK) {
-                                        int i = 1;
-                                        while (questions.next()) {
-                                            System.out.println("Q" + i++ + ":");
-                                            String[] q = new String[9]; q[0]=questions.getString(1);q[1]=questions.getString(2);q[2]=questions.getString(3);q[3]=questions.getString(4);q[4]=questions.getString(5);q[5]=questions.getString(6);q[6]=questions.getString(7);q[7]=questions.getString(8);
-                                            System.out.println(q[2] + " Score: " + q[6] +
-                                                    " Compulsory: '" + q[7]);
-                                            System.out.println("Please Enter \"NULL\" to skip optional questions");
-                                            System.out.println("Your Answer: ");
-                                            scan = new Scanner(System.in);
-                                            String answer = scan.nextLine();
-                                            if (q[1] != "MC" || q[1] != "FITB") {
-                                                stmt.executeQuery("INSERT INTO BATCH VALUES ('" + currentUser[0]
-                                                        + "', '" + q[0] + "', '" +
-                                                        q[2] + "', '" + answer + "')");
-                                            } else {
-                                                if (q[5].equals(answer)) {
-                                                    tempscore += questions.getInt(8);
+                                Exam.close();
+                                Exam = stmt.executeQuery("SELECT * FROM EXAM WHERE SUBJECT_ID IN" +
+                                        "(SELECT SUBJECT_ID FROM SUBJECT WHERE SUBJECT.CLASS_ID=(SELECT CLASS_ID FROM " +
+                                        "STUDENT WHERE STUDENT.CLASS_ID='" + currentUser[2] + "'))");
+                                if (Exam.next()) {
+                                    String ExamDate = Exam.getString(3) + " " + Exam.getString(4);
+                                    String ExamIDCur = Exam.getString(1);
+                                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                                    LocalDateTime currentTime = LocalDateTime.now();
+                                    System.out.println(ExamIDCur);
+                                    try {
+                                        Date date = formatter.parse(ExamDate);
+                                        Date now = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
+                                        boolean OK = true;
+                                        if (date.compareTo(now) < 0) {
+                                            OK = false;
+                                        }
+                                        ResultSet questions = stmt.executeQuery("SELECT * FROM QUESTION WHERE EXAM_ID = '" + ExamIDCur + "'");
+                                        while (OK) {
+                                            int i = 1;
+                                            while (questions.next()) {
+                                                System.out.println("Q" + i++ + ": ");
+                                                String[] q = new String[8];
+                                                q[0] = questions.getString(1);
+                                                q[1] = questions.getString(2);
+                                                q[2] = questions.getString(3);
+                                                q[3] = questions.getString(4);
+                                                q[4] = questions.getString(5);
+                                                q[5] = questions.getString(6);
+                                                q[6] = questions.getString(7);
+
+                                                int thisMark = questions.getInt("SCORE");
+                                                System.out.print(q[3] + " Score: " + thisMark +
+                                                        " Compulsory: '" + q[6]);
+                                                System.out.println("\nPlease Enter \"NULL\" to skip optional questions\n");
+                                                System.out.println("Your Answer: ");
+                                                scan = new Scanner(System.in);
+                                                String answer = scan.nextLine();
+                                                if ((q[1].equals("MC")) || (q[1].equals("FITB"))) {
+                                                    if (answer.equals(q[5])) {
+                                                        ResultSet updateMark = stmt.executeQuery("SELECT STUDENT_EXAM_SCORE " +
+                                                                "FROM EXAM_PAPER WHERE STUDENT_ID = '" + currentUser[0] + "' " +
+                                                                "AND EXAM_ID = '" + ExamIDCur + "'");
+                                                        updateMark.next();
+                                                        int mark = updateMark.getInt(1);
+                                                        mark = mark + thisMark;
+                                                        stmt.executeUpdate("UPDATE EXAM_PAPER SET STUDENT_EXAM_SCORE" +
+                                                                " = " + mark + " WHERE EXAM_ID = '" + ExamIDCur + "'");
+                                                    }
+                                                } else {
+                                                    if (q[1].equals("SFTQ")) {
+                                                        stmt.executeUpdate("INSERT INTO STUDENT_ANSWER VALUES ('"
+                                                                + currentUser[0] + "','" + q[0] + "','" + answer + "', 0, " + thisMark + ")");
+                                                    }
                                                 }
                                             }
+                                            OK = false;
                                         }
-                                        stmt.executeQuery("UPDATE STUDENT_REPORT SET TEMP_SCORE = " + tempscore +
-                                                " WHERE STUDENT_ID= '" + currentUser[0]+"'");
-                                        break;
+                                    } catch (Exception e) {
+                                        System.out.print("Date conversion error");
                                     }
-                                } catch (Exception e) {
-                                    System.out.print("Date conversion error");
                                 }
 
                                 break;
 
                             case "2":
                                 // STUDENT REPORT
-                                ResultSet Reports = stmt.executeQuery("SELECT * FROM STUDENT_EXAM_SCORE WHERE STUDENT_ID='"+currentUser[0]+"' AND TEACHER_FINISHED_GRADING=1");
+                                ResultSet Reports = stmt.executeQuery("SELECT * FROM EXAM_PAPER WHERE STUDENT_ID='"+currentUser[0]+"' AND TEACHER_FINISHED_GRADING=1");
                                 while(Reports.next()){
-                                    System.out.println(Reports.getString(1) + " " + Reports.getString(2) + Reports.getString(3));
-                                }
-                                String[] Subject = new String[10];
-                                int i=0;
-                                Reports.close();
-                                Reports=null;
-
-
-                                Reports = stmt.executeQuery("SELECT SUBJECT_ID FROM STUDENT_REPORT WHERE STUDENT_ID = '"+currentUser[0]+"'");
-                                while(Reports.next()){
-                                    Subject[i++]=Reports.getString(1);
+                                    System.out.println("ExamID: "+Reports.getString(3) + " Score:" + Reports.getInt(5));
                                 }
                                 Reports.close();
-                                Reports=null;
 
-
-                                int[] avgReport = new int[10];
-                                System.out.println("Predicted Subject Grade: ");
-                                for(int x=0; x<Subject.length; x++){
-                                    if(Subject[x]!=null){
-                                        Reports = stmt.executeQuery("SELECT AVG(EXAM_SCORE) FROM STUDENT_EXAM_SCORE WHERE STUDENT_ID='"+currentUser[0]+"' AND TEACHER_FINISHED_GRADING=1 AND EXAM_ID=(SELECT EXAM_ID FROM EXAM_PAPER WHERE SUBJECT_ID='"+Subject[i]+"')");
-                                        while(Reports.next()){ avgReport[x] += Reports.getInt(1);}
-                                        int n=avgReport[x];String grade;
-                                        if(n>94){grade="A+";}
-                                        else if(n>89){grade="A";}
-                                        else if(n>84){grade= "A-";}
-                                        else if(n>79){grade= "B+";}
-                                        else if(n>74){grade= "B";}
-                                        else if(n>69){grade= "B-";}
-                                        else if(n>64){grade= "C+";}
-                                        else if(n>59){grade= "C";}
-                                        else if(n>54){grade= "C-";}
-                                        else if(n>49){grade= "D+";}
-                                        else if(n>44){grade= "D";}
-                                        else if(n>39){grade= "D-";}
-                                        else{grade="F";}
-                                        System.out.println(Subject[x]+": "+grade);
+                                String tempSub;
+                                List<String> Subject = new ArrayList<String>();
+                                String lowest = "test";
+                                int lowestScore=90000;
+                                Reports = stmt.executeQuery("SELECT SUBJECT_ID FROM SUBJECT WHERE " +
+                                        "SUBJECT.SUBJECT_ID IN (SELECT EXAM_PAPER.SUBJECT_ID FROM EXAM_PAPER WHERE" +
+                                        " STUDENT_ID = '"+currentUser[0]+"')");
+                                while(Reports.next()){
+                                    tempSub = Reports.getString(1);
+                                    if(!Subject.contains(tempSub)){
+                                        Subject.add(tempSub);
                                     }
                                 }
-                                int lowest=0;
-                                for(int x=0; x<10; x++){
-                                    if(avgReport[x]<avgReport[lowest]){
-                                        lowest = x;
-                                    }
+
+                                System.out.print("Predicted Subject Grade: ");
+
+                                int n, score;
+
+                                for(int x=0; x<Subject.size(); x++){
+                                        Reports = stmt.executeQuery("SELECT AVG(STUDENT_EXAM_SCORE) FROM EXAM_PAPER " +
+                                                "WHERE STUDENT_ID='"+currentUser[0]+"' AND TEACHER_FINISHED_GRADING=1 AND SUBJECT_ID='"+Subject.get(x)+"'");
+                                        Reports.next();
+                                        score = Reports.getInt(1);
+                                        n = score;
+                                        String grade;
+                                        if (n > 94) {
+                                            grade = "A+";
+                                        } else if (n > 89) {
+                                            grade = "A";
+                                        } else if (n > 84) {
+                                            grade = "A-";
+                                        } else if (n > 79) {
+                                            grade = "B+";
+                                        } else if (n > 74) {
+                                            grade = "B";
+                                        } else if (n > 69) {
+                                            grade = "B-";
+                                        } else if (n > 64) {
+                                            grade = "C+";
+                                        } else if (n > 59) {
+                                            grade = "C";
+                                        } else if (n > 54) {
+                                            grade = "C-";
+                                        } else if (n > 49) {
+                                            grade = "D+";
+                                        } else if (n > 44) {
+                                            grade = "D";
+                                        } else if (n > 39) {
+                                            grade = "D-";
+                                        } else {
+                                            grade = "F";
+                                        }
+                                        if(score<lowestScore){
+                                            lowestScore = score;
+                                            lowest = Subject.get(x);
+                                        }
+                                        System.out.print(Subject.get(x) + ": " + grade + "\n");
+
                                 }
-                                int x=0;lowest=0;if(avgReport[x]<avgReport[lowest]){lowest=x;x++;}
-                                System.out.println("Subject: "+Subject[lowest]+" needs to be improved most.");
+
+                                System.out.println("Subject: "+lowest+" needs to be improved most.");
                                 break;
 
                             default:
