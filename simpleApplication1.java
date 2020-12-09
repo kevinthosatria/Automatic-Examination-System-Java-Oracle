@@ -182,7 +182,7 @@ public class simpleApplication1
                                                 + examSetting[2].toString() + "','" + examSetting[3].toString()+"', '100')");
 
 
-
+                                        System.out.println("Remember that total score must be 100!");
                                         // SET QUESTIONS MODE
                                         boolean setQuestion = true;
                                         while (setQuestion) {
@@ -321,21 +321,7 @@ public class simpleApplication1
 
 
                                     case "2":
-                                    // PAPER CHECKING MODE
-                                    
-                                    // list the papers that are not yet graded by teacher
-                                    System.out.println("\n Paper Checking Mode selected. \n");
-                                    ResultSet unmarkedpapers = stmt.executeQuery("SELECT STUDENT_ID, EXAM_ID FROM STUDENT_EXAM_SCORE WHERE STUDENT_EXAM_SCORE.FINISHED_GRADING = 0");
-                                    while(unmarkedpapers.next()){
-                                        System.out.println(unmarkedpapers.getString(1) + " " + unmarkedpapers.getString(2));
-                                    }
-                                    
-                                    System.out.println("\n \n");
-                                    // choose the paper to mark
 
-                                    // mark the paper
-
-                                    // update student_exam_score table
 
 
                                     default:
@@ -343,6 +329,21 @@ public class simpleApplication1
                                         break;
                                 }
                             case "2":
+                                // TODO 4: PAPER CHECKING MODE
+                                
+                                // list the papers that are not yet graded by teacher
+                                System.out.println("\n Paper Checking Mode selected. \n");
+                                ResultSet unmarkedpapers = stmt.executeQuery("SELECT STUDENT_ID, EXAM_ID FROM STUDENT_EXAM_SCORE WHERE STUDENT_EXAM_SCORE.TEACHER_FINISHED_GRADING = 0");
+                                while(unmarkedpapers.next()){
+                                    System.out.println(unmarkedpapers.getString(1) + " " + unmarkedpapers.getString(2));
+                                }
+                                
+                                System.out.println("\n \n");
+                                // choose the paper to mark
+
+                                // mark the paper
+
+                                // update student_exam_score table
                                 break;
                         }
                     } else {
@@ -428,15 +429,20 @@ public class simpleApplication1
                                 while(Reports.next()){
                                     System.out.println(Reports.getString(1) + " " + Reports.getString(2) + Reports.getString(3));
                                 }
-                                String[] Subject = new String[10];int i=0;
-				Reports.close();
-				Reports=null;
+                                String[] Subject = new String[10];
+                                int i=0;
+                                Reports.close();
+                                Reports=null;
+
+
                                 Reports = stmt.executeQuery("SELECT SUBJECT_ID FROM STUDENT_REPORT WHERE STUDENT_ID = '"+currentUser[0]+"'");
                                 while(Reports.next()){
                                     Subject[i++]=Reports.getString(1);
                                 }
-				Reports.close();
-				Reports=null;
+                                Reports.close();
+                                Reports=null;
+
+
                                 int[] avgReport = new int[10];
                                 System.out.println("Predicted Subject Grade: ");
                                 for(int x=0; x<Subject.length; x++){
